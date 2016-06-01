@@ -170,7 +170,13 @@ namespace Xunit.Sdk
             if (SynchronizationContext.Current != null)
             {
                 var scheduler = TaskScheduler.FromCurrentSynchronizationContext();
-                taskRunner = code => Task.Factory.StartNew(code, cancellationTokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.HideScheduler, scheduler).Unwrap();
+                taskRunner = code => Task.Factory.StartNew(
+                    () =>
+                    {
+                        SynchronizationContext.SetSynchronizationContext(null);
+                        return code();
+                    },
+                    cancellationTokenSource.Token, TaskCreationOptions.DenyChildAttach | TaskCreationOptions.HideScheduler, scheduler).Unwrap();
             }
             else
                 taskRunner = code => Task.Run(code, cancellationTokenSource.Token);
